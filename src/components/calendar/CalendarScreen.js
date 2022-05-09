@@ -1,39 +1,45 @@
 import React, { useState } from 'react';
+import { useDispatch, useSelector} from 'react-redux'
 import { Calendar, momentLocalizer } from 'react-big-calendar'
 import moment from 'moment';
 
 import { NavBar } from '../ui/NavBar'
 import { messages } from '../../helpers/calendarMessagesES';
 import { CalendarEvent } from './CalendarEvent';
+import { CalendarModal } from './CalendarModal';
 
 import 'react-big-calendar/lib/sass/styles.scss';
-import 'moment/locale/es';
+import { uiOpenModal } from '../../actions/ui';
+import { eventClearActiveEvent, setActive } from '../../actions/events';
+import { AddEventFab } from '../ui/AddEventFab';
+import { DeleteEventFab } from '../ui/DeleteEventFab';
+
 
 moment.locale('es');
 
 const localizer = momentLocalizer(moment);
 
-const event = [{
-  title: 'Entrevista final React',
-  start: moment().add().toDate(),
-  end: moment().add(2,'hours').toDate(),
-  bgcolor: '#6f9ceb',
-  notes: 'Celebrar',
-  user:{
-    _id:'123',
-    name:'Frank'
-  }
-}]
 
 export const CalendarScreen = () => {
 
+  const dispatch  = useDispatch();
+  const {events,activeEvent} = useSelector(state => state.calendar);
+
+
   const [lastView, setlastView] = useState(localStorage.getItem('lastview') || 'month');
 
-  const onDoubleClick = ()=>{
-    console.log('double')
+  const onDoubleClick = (e)=>{
+   dispatch(uiOpenModal());
   }
-   const onSelectEvent = ()=>{
-    console.log('selected')
+  
+  const onSelectEvent = (e)=>{
+   dispatch(setActive(e));
+  }
+
+  const onSelectedSlot = (e) => {
+    //TODO: Crear Evento a partir de click en calendario
+  
+    dispatch(eventClearActiveEvent());
   }
 
   const onViewChange = (e)=> {
@@ -50,12 +56,10 @@ export const CalendarScreen = () => {
       display: 'block',
       color:'white'
     }
-    console.log(event,start,end,isSelected)
-
+   
     return{
       style
     }
-
 
   }
 
@@ -63,8 +67,8 @@ export const CalendarScreen = () => {
     <div className="calendar-screen">
     <NavBar/>
     <Calendar
-      localizer={localizer}
-      events={event}
+      localizer={ localizer }
+      events={ events }
       startAccessor="start"
       endAccessor="end"
       messages={ messages }
@@ -73,8 +77,17 @@ export const CalendarScreen = () => {
       onSelectEvent ={ onSelectEvent }
       onView={ onViewChange }
       view={ lastView }
+      onSelectSlot = { onSelectedSlot }
+      selectable = { true }
       components = {{ event: CalendarEvent }}
     />
+
+    <AddEventFab/>
+    {
+      (activeEvent)  && <DeleteEventFab/>
+      
+    }
+    <CalendarModal/>
     </div>
   )
 }
